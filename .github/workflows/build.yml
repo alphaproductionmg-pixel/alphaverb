@@ -1,0 +1,73 @@
+name: Build AlphaVerb
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: Windows
+          - os: macos-latest
+            name: macOS
+          - os: ubuntu-latest
+            name: Linux
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libjack-jackd2-dev libfreetype6-dev \
+            libx11-dev libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev \
+            libxrandr-dev libxrender-dev libgl1-mesa-dev libcurl4-openssl-dev
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir dist
+          cp -r build/AlphaVerb_artefacts/Release/VST3 dist/ 2>/dev/null || cp -r build/AlphaVerb_artefacts/VST3 dist/
+          cp -r build/AlphaVerb_artefacts/Release/Standalone dist/ 2>/dev/null || cp -r build/AlphaVerb_artefacts/Standalone dist/ || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AlphaVerb-${{ matrix.name }}
+          path: dist
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Zip
+        run: |
+          cd artifacts
+          for d in */; do zip -r "${d%/}.zip" "$d"; done
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: AlphaVerb (latest build)
+          files: artifacts/*.zip
