@@ -1,4 +1,5 @@
 #include "PluginProcessor.h"
+#include "PluginEditor.h"
 
 namespace
 {
@@ -193,7 +194,7 @@ void AlphaVerbProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
 
 juce::AudioProcessorEditor* AlphaVerbProcessor::createEditor()
 {
-    return new juce::GenericAudioProcessorEditor (*this);
+    return new AlphaVerbEditor (*this);
 }
 
 void AlphaVerbProcessor::getStateInformation (juce::MemoryBlock& destData)

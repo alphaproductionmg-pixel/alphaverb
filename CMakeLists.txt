@@ -20,7 +20,8 @@ juce_add_plugin(AlphaVerb
     COPY_PLUGIN_AFTER_BUILD FALSE)
 
 target_sources(AlphaVerb PRIVATE
-    Source/PluginProcessor.cpp)
+    Source/PluginProcessor.cpp
+    Source/PluginEditor.cpp)
 
 target_compile_definitions(AlphaVerb PUBLIC
     JUCE_WEB_BROWSER=0
